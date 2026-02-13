@@ -1,0 +1,11 @@
+[user]
+    name = Milind Khamkar
+    email = fullstackwithmilind@gmail.com
+[core]
+    editor = vim
+[pull]
+    rebase = false
+[init]
+    defaultBranch = main
+[color]
+    ui = auto

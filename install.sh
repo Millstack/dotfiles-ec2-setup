@@ -1,42 +1,46 @@
 #!/bin/bash
 
-# Get the directory where this script is located
+# 1. Variables
 DOTFILES_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+FILES=".vimrc .bashrc .gitconfig aliases.sh"
+GITHUB_EMAIL="fullstackwithmilind@gmail.com"
 
-# List of files to symlink
-files=".vimrc .bashrc .gitconfig aliases.sh"
+echo "🚀 Starting Cloud Engineer Environment Setup..."
 
-echo "Starting dotfiles installation..."
+# 2. Install GitHub CLI (For Ubuntu/Debian EC2)
+if ! command -v gh &> /dev/null; then
+    echo "Installing GitHub CLI..."
+    type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+    && sudo apt update \
+    && sudo apt install gh -y
+fi
 
-for file in $files; do
-    # 1. Back up existing files if they aren't already symlinks
+# 3. Create Symlinks
+echo "Linking dotfiles..."
+for file in $FILES; do
     if [ -f ~/$file ] && [ ! -L ~/$file ]; then
-        echo "Backing up existing $file to $file.bak"
         mv ~/$file ~/$file.bak
     fi
-
-    # 2. Create the Symlink
-    echo "Creating symlink for $file"
     ln -sf "$DOTFILES_DIR/$file" ~/"$file"
 done
 
-# --- NEW: SSH KEY AUTOMATION ---
-if [ ! -f ~/.ssh/id_ed25519 ]; then
-    echo "No SSH key found. Generating one for GitHub..."
-    # Generates a key without asking for a passphrase
-    ssh-keygen -t ed25519 -C "fullstackwithmilind@gmail.com" -N "" -f ~/.ssh/id_ed25519
-    
-    echo "*******************************************************"
-    echo "-------------------------------------------------------"
-    echo "COPY THIS KEY TO GITHUB (Settings > SSH and GPG keys):"
-    cat ~/.ssh/id_ed25519.pub
-    echo "-------------------------------------------------------"
-    echo "*******************************************************"
+# 4. One-Time GitHub Login & SSH Setup
+echo "Checking GitHub Authentication..."
+if ! gh auth status &> /dev/null; then
+    echo "Please follow the prompts to log in to GitHub."
+    # This command generates an SSH key, uploads it to GitHub, and logs you in.
+    gh auth login --hostname github.com --git-protocol ssh --web
 else
-    echo "------------------------"
-    echo "SSH key already exists."
-    cat ~/.ssh/id_ed25519.pub
-    echo "------------------------"
+    echo "✅ Already logged into GitHub."
 fi
 
-echo "Installation complete! Please run 'source ~/.bashrc'"
+# 5. Finalize SSH Agent in .bashrc (if not already there)
+if ! grep -q "ssh-agent" ~/.bashrc; then
+    echo "Adding SSH agent auto-start to .bashrc..."
+    echo -e "\n# Auto-start SSH Agent\neval \$(ssh-agent -s) > /dev/null\nssh-add ~/.ssh/id_ed25519 2>/dev/null" >> ~/.bashrc
+fi
+
+echo "✨ Setup Complete! Run 'source ~/.bashrc' to begin."

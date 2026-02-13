@@ -9,8 +9,8 @@ export HISTSIZE=10000
 export HISTCONTROL=ignoredups
 
 # Load custom aliases
-if [ -f ~/.aliases.sh ]; then
-    . ~/.aliases.sh
+if [ -f ~/aliases.sh ]; then
+    . ~/aliases.sh
 fi
 
 # --- SSH Agent Auto-Start ---

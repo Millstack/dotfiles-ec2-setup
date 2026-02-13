@@ -15,6 +15,10 @@ alias ga="git add"
 alias gc="git commit -m"
 alias gp="git push"
 
+# Check if GitHub is happy
+# ghealth
+alias gith="gh auth status"
+
 # Cloud/DevOps
 alias myip="curl ifconfig.me"
 alias tf="terraform"
